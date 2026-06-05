@@ -2,7 +2,10 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Draw &amp; Race</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
@@ -29,8 +32,15 @@
   --muted2:    #6a7090;
 }
 
-html, body {
-  width: 100%; height: 100%;
+html {
+  height: 100%;
+  height: -webkit-fill-available;
+}
+
+body {
+  width: 100%;
+  min-height: 100%;
+  min-height: -webkit-fill-available;
   background: var(--bg);
   color: var(--white);
   font-family: 'Nunito', sans-serif;
@@ -38,6 +48,8 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
+  /* Safe area for notched phones */
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
 /* ============================================================
@@ -47,9 +59,9 @@ html, body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: clamp(6px, 1.5vw, 12px);
   width: min(740px, 100vw);
-  padding: 12px;
+  padding: clamp(6px, 2vw, 14px);
 }
 
 /* ── Top HUD bar ── */
@@ -60,23 +72,24 @@ html, body {
   align-items: center;
   background: var(--surface);
   border: 1px solid var(--border2);
-  border-radius: 14px;
-  padding: 10px 20px;
-  gap: 16px;
+  border-radius: clamp(8px, 2vw, 14px);
+  padding: clamp(6px, 1.5vw, 10px) clamp(10px, 3vw, 20px);
+  gap: clamp(8px, 2vw, 16px);
 }
 
 #game-title {
   font-family: 'Bebas Neue', sans-serif;
-  font-size: 28px;
-  letter-spacing: 3px;
+  font-size: clamp(18px, 4vw, 28px);
+  letter-spacing: clamp(1px, 0.5vw, 3px);
   color: var(--yellow);
   text-shadow: 0 0 24px rgba(247,201,72,.35);
   white-space: nowrap;
+  text-align: center;
 }
 
 .hud-stats {
   display: flex;
-  gap: 20px;
+  gap: clamp(10px, 2.5vw, 20px);
 }
 .hud-stats.right { justify-content: flex-end; }
 
@@ -84,18 +97,18 @@ html, body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-width: 52px;
+  min-width: clamp(36px, 7vw, 52px);
 }
 .stat-label {
   font-family: 'DM Mono', monospace;
-  font-size: 9px;
-  letter-spacing: 1.5px;
+  font-size: clamp(7px, 1.5vw, 9px);
+  letter-spacing: 1px;
   text-transform: uppercase;
   color: var(--muted2);
 }
 .stat-value {
   font-family: 'DM Mono', monospace;
-  font-size: 22px;
+  font-size: clamp(14px, 3.5vw, 22px);
   font-weight: 500;
   color: var(--white);
   line-height: 1;
@@ -108,12 +121,13 @@ html, body {
 #canvas-shell {
   position: relative;
   width: 100%;
-  border-radius: 14px;
+  border-radius: clamp(8px, 2vw, 14px);
   overflow: hidden;
   border: 1px solid var(--border2);
   box-shadow: 0 0 60px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.03);
-  /* aspect ratio maintained by canvas intrinsic size */
   line-height: 0;
+  /* Touch-action: none prevents scroll when drawing on canvas */
+  touch-action: none;
 }
 
 #gameCanvas, #uiCanvas {
@@ -125,20 +139,30 @@ html, body {
   position: absolute;
   inset: 0;
   cursor: crosshair;
+  touch-action: none;
 }
 
 /* ── Footer hint ── */
 #hint-bar {
   font-family: 'DM Mono', monospace;
-  font-size: 11px;
+  font-size: clamp(9px, 1.8vw, 11px);
   color: var(--muted);
   letter-spacing: 1px;
+  text-align: center;
+  padding: 0 8px;
+  line-height: 1.5;
 }
 #hint-bar b { color: var(--yellow); font-weight: 500; }
 
+/* Mobile: show touch hint, hide mouse hint */
+#hint-touch { display: none; }
+@media (hover: none) and (pointer: coarse) {
+  #hint-mouse { display: none; }
+  #hint-touch { display: inline; }
+}
+
 /* ============================================================
-   OVERLAY SCREENS (rendered on uiCanvas via JS, but we also
-   keep a DOM overlay for Game Over with the restart button)
+   OVERLAY SCREENS
    ============================================================ */
 .dom-overlay {
   position: absolute;
@@ -147,12 +171,14 @@ html, body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 16px;
+  gap: clamp(10px, 2.5vw, 16px);
   background: rgba(11,13,23,.82);
   backdrop-filter: blur(6px);
-  border-radius: 14px;
+  -webkit-backdrop-filter: blur(6px);
+  border-radius: inherit;
   z-index: 20;
   animation: fadeIn .3s ease;
+  padding: clamp(16px, 4vw, 32px);
 }
 .dom-overlay.visible { display: flex; }
 
@@ -160,35 +186,35 @@ html, body {
 
 .overlay-eyebrow {
   font-family: 'DM Mono', monospace;
-  font-size: 11px;
+  font-size: clamp(9px, 1.8vw, 11px);
   letter-spacing: 3px;
   color: var(--muted2);
   text-transform: uppercase;
 }
 .overlay-title {
   font-family: 'Bebas Neue', sans-serif;
-  font-size: 56px;
-  letter-spacing: 4px;
+  font-size: clamp(32px, 8vw, 56px);
+  letter-spacing: clamp(2px, 0.8vw, 4px);
   color: var(--yellow);
   text-shadow: 0 0 40px rgba(247,201,72,.4);
   line-height: 1;
 }
 .overlay-score-big {
   font-family: 'DM Mono', monospace;
-  font-size: 64px;
+  font-size: clamp(36px, 9vw, 64px);
   font-weight: 500;
   color: var(--white);
   line-height: 1;
 }
 .overlay-hs {
   font-family: 'DM Mono', monospace;
-  font-size: 14px;
+  font-size: clamp(11px, 2.5vw, 14px);
   color: var(--orange);
 }
 .new-record-badge {
   display: none;
   font-family: 'Bebas Neue', sans-serif;
-  font-size: 20px;
+  font-size: clamp(14px, 3.5vw, 20px);
   letter-spacing: 3px;
   color: var(--cyan);
   text-shadow: 0 0 20px rgba(61,232,200,.5);
@@ -198,19 +224,19 @@ html, body {
 @keyframes recordPop { from { transform: scale(1); } to { transform: scale(1.08); } }
 
 .overlay-instructions {
-  font-size: 13px;
+  font-size: clamp(11px, 2.5vw, 13px);
   color: var(--muted2);
   text-align: center;
   line-height: 1.8;
-  max-width: 340px;
+  max-width: min(340px, 90%);
 }
 .overlay-instructions b { color: var(--yellow); font-weight: 700; }
 
 .btn-play {
   font-family: 'Bebas Neue', sans-serif;
-  font-size: 22px;
+  font-size: clamp(16px, 4vw, 22px);
   letter-spacing: 3px;
-  padding: 14px 52px;
+  padding: clamp(10px, 2.5vw, 14px) clamp(28px, 7vw, 52px);
   border: 2px solid var(--yellow);
   background: transparent;
   color: var(--yellow);
@@ -218,6 +244,9 @@ html, body {
   cursor: pointer;
   transition: all .18s;
   margin-top: 4px;
+  /* Large tap target for mobile */
+  min-height: 44px;
+  min-width: 120px;
 }
 .btn-play:hover {
   background: var(--yellow);
@@ -230,9 +259,10 @@ html, body {
 /* ── Draw counter pill ── */
 #draw-counter {
   position: absolute;
-  top: 12px; right: 14px;
+  top: clamp(6px, 1.5vw, 12px);
+  right: clamp(8px, 2vw, 14px);
   font-family: 'DM Mono', monospace;
-  font-size: 11px;
+  font-size: clamp(9px, 1.8vw, 11px);
   padding: 4px 10px;
   background: rgba(0,0,0,.55);
   border: 1px solid var(--border2);
@@ -242,6 +272,32 @@ html, body {
   z-index: 10;
 }
 #draw-counter span { color: var(--yellow); }
+
+/* ============================================================
+   LANDSCAPE PHONE — tighten up vertically
+   ============================================================ */
+@media (max-height: 500px) and (orientation: landscape) {
+  #app { gap: 4px; padding: 4px; }
+  #hud { padding: 4px 12px; border-radius: 8px; }
+  .stat-value { font-size: 16px; }
+  .stat-label { font-size: 7px; }
+  #game-title { font-size: 16px; letter-spacing: 1px; }
+  .dom-overlay { gap: 8px; padding: 10px; }
+  .overlay-title { font-size: 28px; }
+  .overlay-score-big { font-size: 32px; }
+  .overlay-instructions { font-size: 10px; line-height: 1.5; }
+  .btn-play { font-size: 14px; padding: 8px 24px; }
+  #hint-bar { font-size: 9px; }
+}
+
+/* ============================================================
+   VERY SMALL SCREENS (< 360px wide)
+   ============================================================ */
+@media (max-width: 360px) {
+  #hud { grid-template-columns: 1fr; justify-items: center; gap: 4px; }
+  .hud-stats { display: none; }
+  #game-title { font-size: 22px; }
+}
 </style>
 </head>
 <body>
@@ -285,7 +341,7 @@ html, body {
       <div class="overlay-title">Draw &amp; Race</div>
       <p class="overlay-instructions">
         Mobil bergerak otomatis. <b>Gambar jembatan</b> di atas jurang<br>
-        agar mobil tidak jatuh. Klik &amp; seret untuk menggambar garis.<br>
+        agar mobil tidak jatuh. <span id="hint-mouse">Klik &amp; seret</span><span id="hint-touch">Sentuh &amp; geser</span> untuk menggambar garis.<br>
         Bertahan sejauh mungkin dalam <b>60 detik</b>!
       </p>
       <button class="btn-play" id="startBtn">MULAI ▶</button>
@@ -303,7 +359,7 @@ html, body {
   </div>
 
   <div id="hint-bar">
-    <b>KLIK + SERET</b> di atas jurang untuk menggambar jembatan &nbsp;·&nbsp;
+    <b>SENTUH / KLIK + SERET</b> di atas jurang untuk menggambar jembatan &nbsp;·&nbsp;
     Garis lama otomatis terhapus jika penuh
   </div>
 </div>
@@ -329,25 +385,25 @@ const H = gCanvas.height;  // 330
    GAME CONSTANTS
    ================================================================ */
 const C = {
-  GRAVITY:       0.5,       // percepatan gravitasi (px/frame²)
-  CAR_SPEED:     2.8,       // kecepatan maju mobil (px/frame)
+  GRAVITY:       0.5,
+  CAR_SPEED:     2.8,
   CAR_W:         40,
   CAR_H:         18,
   WHEEL_R:       8,
-  GROUND_BASE:   268,       // Y koordinat tanah default
-  FALL_DEATH:    H + 60,    // batas bawah sebelum dinyatakan mati
-  MAX_LINES:     20,        // max garis yang bisa digambar pemain
-  LINE_THICK:    6,         // ketebalan garis pemain
-  LINE_TOLERANCE: 8,        // toleransi deteksi tumbukan garis (px)
+  GROUND_BASE:   268,
+  FALL_DEATH:    H + 60,
+  MAX_LINES:     20,
+  LINE_THICK:    6,
+  LINE_TOLERANCE: 8,
   GAME_SECONDS:  60,
-  LOOK_AHEAD:    900,       // seberapa jauh terrain di-generate di depan
-  TERRAIN_PRUNE: 200,       // hapus terrain di belakang kamera sejauh ini
+  LOOK_AHEAD:    900,
+  TERRAIN_PRUNE: 200,
 };
 
 /* ================================================================
    STATE
    ================================================================ */
-let gameState   = 'idle';  // 'idle' | 'playing' | 'dead' | 'over'
+let gameState   = 'idle';
 let score       = 0;
 let highScore   = +localStorage.getItem('dr_hs') || 0;
 let timeLeft    = C.GAME_SECONDS;
@@ -355,29 +411,15 @@ let timerID     = null;
 let rafID       = null;
 let lastTS      = 0;
 
-// Scrolling camera offset (x-axis only)
 let camX = 0;
-
-// Terrain: array of segment objects
 let terrain = [];
-
-// Player-drawn lines (stored in WORLD coordinates)
 let drawnLines = [];
-
-// Car object
 let car = {};
-
-// Drawing state
 let drawing    = false;
-let drawPt     = { x: 0, y: 0 };   // start point in SCREEN coords
-let drawCurr   = { x: 0, y: 0 };   // current mouse pos in SCREEN coords
-
-// Particle system (dust)
+let drawPt     = { x: 0, y: 0 };
+let drawCurr   = { x: 0, y: 0 };
 let particles  = [];
-
-// Background stars (static, generated once)
 let bgStars    = [];
-
 
 /* ================================================================
    UTILITY FUNCTIONS
@@ -386,26 +428,31 @@ const rand  = (a, b)       => a + Math.random() * (b - a);
 const clamp = (v, lo, hi)  => Math.max(lo, Math.min(hi, v));
 const lerp  = (a, b, t)    => a + (b - a) * t;
 
-/** Convert screen X to world X */
-const toWorld = (sx) => sx + camX;
-/** Convert world X to screen X */
+const toWorld  = (sx) => sx + camX;
 const toScreen = (wx) => wx - camX;
 
-/** Get CSS canvas position from mouse/touch event */
+/**
+ * Get canvas coordinates from mouse/touch event.
+ * Correctly scales from CSS pixels to canvas pixels on any device.
+ */
 function getPos(e) {
   const rect = uCanvas.getBoundingClientRect();
   const scaleX = W / rect.width;
   const scaleY = H / rect.height;
-  const src = e.touches ? e.touches[0] : (e.changedTouches ? e.changedTouches[0] : e);
+  // Support touch, changedTouches (touchend), and mouse
+  const src = (e.touches && e.touches.length > 0)
+    ? e.touches[0]
+    : (e.changedTouches && e.changedTouches.length > 0)
+      ? e.changedTouches[0]
+      : e;
   return {
     x: (src.clientX - rect.left) * scaleX,
     y: (src.clientY - rect.top)  * scaleY,
   };
 }
 
-
 /* ================================================================
-   BACKGROUND STARS — generated once, drawn every frame
+   BACKGROUND STARS
    ================================================================ */
 function initStars() {
   bgStars = [];
@@ -418,22 +465,10 @@ function initStars() {
   }
 }
 
-
 /* ================================================================
    TERRAIN GENERATION
    ================================================================ */
-
-/**
- * Creates terrain segments sequentially.
- * Each segment is one of:
- *   - { type:'flat',  x, y, w }          — flat ground
- *   - { type:'ramp',  x, y, w, endY }    — sloped ground
- *   - { type:'gap',   x, w }             — void / chasm
- *
- * The terrain is a continuous polygon; gaps are actual missing pieces.
- */
 function generateTerrain(fromX, length) {
-  // Seed: start with a long flat platform
   if (terrain.length === 0) {
     terrain.push({ type: 'flat', x: -100, y: C.GROUND_BASE, w: 360 });
   }
@@ -447,16 +482,13 @@ function generateTerrain(fromX, length) {
     const roll     = Math.random();
 
     if (x < 100) {
-      // Never start with a gap — give player time to react
       addFlat(x, prevEndY, rand(120, 200));
     } else if (roll < 0.28) {
-      // GAP
       const gw = rand(70, 130);
       terrain.push({ type: 'gap', x, w: gw });
       x += gw;
       continue;
     } else if (roll < 0.52) {
-      // RAMP
       const rw   = rand(80, 170);
       const dY   = rand(-50, 50);
       const endY = clamp(prevEndY + dY, C.GROUND_BASE - 70, C.GROUND_BASE + 8);
@@ -464,7 +496,6 @@ function generateTerrain(fromX, length) {
       x += rw;
       continue;
     } else {
-      // FLAT
       addFlat(x, prevEndY, rand(80, 220));
     }
   }
@@ -475,17 +506,15 @@ function generateTerrain(fromX, length) {
   }
 }
 
-/** Returns the Y coordinate at the RIGHT edge of a segment */
 function segEndY(seg) {
   if (!seg) return C.GROUND_BASE;
   if (seg.type === 'ramp') return seg.endY;
-  if (seg.type === 'gap')  return C.GROUND_BASE;   // after gap, assume default
+  if (seg.type === 'gap')  return C.GROUND_BASE;
   return seg.y;
 }
 
-/** Returns the surface Y at world-X wx for a given segment, or null */
 function segSurfaceAt(seg, wx) {
-  if (seg.type === 'gap') return null;    // no surface in a gap
+  if (seg.type === 'gap') return null;
   const localX = wx - seg.x;
   if (localX < 0 || localX > seg.w) return null;
   if (seg.type === 'flat') return seg.y;
@@ -496,29 +525,11 @@ function segSurfaceAt(seg, wx) {
   return null;
 }
 
-
 /* ================================================================
    PHYSICS CORE
-   ================================================================
-   The physics model is a simple point-mass car with:
-     1. Constant horizontal velocity (no friction on X)
-     2. Gravity applied each frame to vertical velocity
-     3. Collision detection against:
-          a) Terrain segments
-          b) Player-drawn lines
-   Collision response: push car above surface, zero downward velocity.
    ================================================================ */
-
-/**
- * Test whether a world-x position `wx` lies on a player-drawn line
- * and return that line's Y at `wx`, or null.
- *
- * Each drawn line is a segment (x1,y1)-(x2,y2) in world coords.
- * We interpolate: if wx is within the X span of the line,
- * compute Y at that X using linear interpolation.
- */
 function drawnLineSurfaceAt(wx) {
-  let best = null; // lowest (highest on screen) valid surface Y
+  let best = null;
 
   for (const ln of drawnLines) {
     const mnX = Math.min(ln.wx1, ln.wx2);
@@ -531,70 +542,42 @@ function drawnLineSurfaceAt(wx) {
     const t  = (wx - ln.wx1) / span;
     const sy = ln.wy1 + t * (ln.wy2 - ln.wy1);
 
-    // Only count lines that are at or below the car's belly
-    // (we don't want upward-pointing spikes to block the car from above)
     if (best === null || sy < best) best = sy;
   }
   return best;
 }
 
-/**
- * Main physics step. Called each frame.
- * dt: delta-time multiplier (1.0 = 60fps, 2.0 = 30fps, etc.)
- */
 function physicsCar(dt) {
-  /* ── 1. Apply gravity ── */
   car.vy += C.GRAVITY * dt;
-
-  /* ── 2. Advance horizontal position ── */
   car.x  += C.CAR_SPEED * dt;
-
-  /* ── 3. Advance vertical position ── */
   car.y  += car.vy * dt;
 
-  /* ── 4. Collision resolution ──────────────────────────────────
-     We check two "probe points" along the bottom of the car:
-       - Front wheel contact: car.x + wheelInset from front
-       - Rear  wheel contact: car.x + wheelInset from back
-     For each probe, find the highest (smallest Y) surface beneath it
-     from both terrain and drawn lines. Then push the car up so its
-     bottom wheel sits exactly on that surface.
-  ─────────────────────────────────────────────────────────────── */
-  const WHEEL_INSET = 10;  // horizontal inset from car edge to wheel centre
+  const WHEEL_INSET = 10;
   const probes = [
-    car.x + WHEEL_INSET,           // front wheel X (world)
-    car.x + C.CAR_W - WHEEL_INSET, // rear  wheel X (world)
+    car.x + WHEEL_INSET,
+    car.x + C.CAR_W - WHEEL_INSET,
   ];
 
-  const carBottom = car.y + C.CAR_H + C.WHEEL_R; // Y of bottom of wheels
-
-  let highestSurface = Infinity; // smallest Y found = highest surface
+  const carBottom = car.y + C.CAR_H + C.WHEEL_R;
+  let highestSurface = Infinity;
 
   for (const wx of probes) {
-    // ── a) Check terrain segments ──
     for (const seg of terrain) {
       const sy = segSurfaceAt(seg, wx);
       if (sy !== null && sy < highestSurface) highestSurface = sy;
     }
-    // ── b) Check player-drawn lines ──
     const dy = drawnLineSurfaceAt(wx);
     if (dy !== null && dy < highestSurface) highestSurface = dy;
   }
 
-  /* ── 5. Apply surface contact ──────────────────────────────────
-     If the car's wheel bottom has reached or passed the surface,
-     move the car back to sit on top and zero its downward velocity.
-     A tiny bounce coefficient gives a natural feel.
-  ─────────────────────────────────────────────────────────────── */
-  const BOUNCE = 0.08; // fraction of velocity preserved on bounce
+  const BOUNCE = 0.08;
 
   if (highestSurface < Infinity) {
     const penetration = carBottom - highestSurface;
     if (penetration >= 0) {
-      // Push car above surface
       car.y -= penetration;
       if (car.vy > 0) {
-        car.vy = -car.vy * BOUNCE; // tiny bounce
+        car.vy = -car.vy * BOUNCE;
         if (Math.abs(car.vy) < 0.3) car.vy = 0;
       }
       car.onGround = true;
@@ -605,20 +588,16 @@ function physicsCar(dt) {
     car.onGround = false;
   }
 
-  /* ── 6. Wheel spin angle ── */
   car.wheelAngle += (C.CAR_SPEED / C.WHEEL_R) * dt;
 
-  /* ── 7. Visual lean (based on vertical velocity) ── */
   const targetLean = clamp(car.vy / 25, -0.4, 0.4);
   car.lean = lerp(car.lean, targetLean, 0.12);
 
-  /* ── 8. Death check ── */
   if (car.y > C.FALL_DEATH) car.alive = false;
 }
 
-
 /* ================================================================
-   PARTICLE SYSTEM — Wheel dust/sparks
+   PARTICLE SYSTEM
    ================================================================ */
 function spawnDust() {
   if (!car.onGround) return;
@@ -645,12 +624,9 @@ function updateParticles(dt) {
   }
 }
 
-
 /* ================================================================
    RENDER FUNCTIONS
    ================================================================ */
-
-/** Sky gradient + stars */
 function drawSky() {
   const g = gCtx.createLinearGradient(0, 0, 0, H);
   g.addColorStop(0,   '#060810');
@@ -659,7 +635,6 @@ function drawSky() {
   gCtx.fillStyle = g;
   gCtx.fillRect(0, 0, W, H);
 
-  // Stars (twinkle via sine)
   const t = Date.now() * 0.001;
   for (const s of bgStars) {
     const alpha = 0.2 + 0.5 * Math.abs(Math.sin(s.a + t * s.spd));
@@ -672,12 +647,10 @@ function drawSky() {
   gCtx.globalAlpha = 1;
 }
 
-/** Distant mountain silhouettes (parallax, slower than world) */
 function drawMountains() {
-  const px  = camX * 0.15; // parallax factor
+  const px  = camX * 0.15;
   gCtx.save();
 
-  // Back layer
   gCtx.fillStyle = '#0e1322';
   gCtx.beginPath();
   const peaks = [
@@ -693,10 +666,8 @@ function drawMountains() {
   gCtx.restore();
 }
 
-/** Grid scanlines on the ground (retro style) */
 function drawGroundGrid() {
   const gridY0 = C.GROUND_BASE;
-  // Horizontal line
   gCtx.strokeStyle = 'rgba(61,255,160,0.06)';
   gCtx.lineWidth   = 1;
   const step = 36;
@@ -709,22 +680,18 @@ function drawGroundGrid() {
   }
 }
 
-/** Render terrain segments */
 function drawTerrain() {
   gCtx.save();
 
   for (const seg of terrain) {
-    const sx = toScreen(seg.x);          // segment left edge in screen coords
+    const sx = toScreen(seg.x);
     const sw = seg.w;
 
     if (seg.type === 'gap') {
-      // Void / chasm
       const gx = sx, gw = sw;
-      // Danger pattern
       gCtx.fillStyle = 'rgba(255,61,90,0.07)';
       gCtx.fillRect(gx, C.GROUND_BASE, gw, H - C.GROUND_BASE);
 
-      // Vertical dashed edges
       gCtx.strokeStyle = 'rgba(255,61,90,0.6)';
       gCtx.lineWidth   = 1.5;
       gCtx.setLineDash([5, 5]);
@@ -734,7 +701,6 @@ function drawTerrain() {
       gCtx.stroke();
       gCtx.setLineDash([]);
 
-      // Gap label
       gCtx.fillStyle = 'rgba(255,61,90,0.4)';
       gCtx.font      = 'bold 11px "DM Mono", monospace';
       gCtx.textAlign = 'center';
@@ -742,11 +708,9 @@ function drawTerrain() {
       continue;
     }
 
-    // Flat or ramp
     const y1 = seg.type === 'flat' ? seg.y : seg.y;
     const y2 = seg.type === 'flat' ? seg.y : seg.endY;
 
-    // Ground fill polygon
     const grad = gCtx.createLinearGradient(0, Math.min(y1,y2), 0, H);
     grad.addColorStop(0,   '#1d2540');
     grad.addColorStop(0.08,'#161c35');
@@ -760,7 +724,6 @@ function drawTerrain() {
     gCtx.closePath();
     gCtx.fill();
 
-    // Surface line (neon green)
     gCtx.beginPath();
     gCtx.moveTo(sx, y1); gCtx.lineTo(sx + sw, y2);
     gCtx.strokeStyle = '#3dffa0';
@@ -770,7 +733,6 @@ function drawTerrain() {
     gCtx.stroke();
     gCtx.shadowBlur  = 0;
 
-    // Subtle second glow line
     gCtx.beginPath();
     gCtx.moveTo(sx, y1 + 4); gCtx.lineTo(sx + sw, y2 + 4);
     gCtx.strokeStyle = 'rgba(61,255,160,0.18)';
@@ -781,19 +743,17 @@ function drawTerrain() {
   gCtx.restore();
 }
 
-/** Render player-drawn lines */
 function drawPlayerLines() {
   if (drawnLines.length === 0) return;
   gCtx.save();
 
   for (let i = 0; i < drawnLines.length; i++) {
     const ln    = drawnLines[i];
-    const age   = drawnLines.length - 1 - i;  // 0 = newest
+    const age   = drawnLines.length - 1 - i;
     const alpha = Math.max(0.25, 1 - age * 0.04);
 
     const sx1 = toScreen(ln.wx1), sx2 = toScreen(ln.wx2);
 
-    // Glow pass
     gCtx.beginPath();
     gCtx.moveTo(sx1, ln.wy1); gCtx.lineTo(sx2, ln.wy2);
     gCtx.strokeStyle = `rgba(247,201,72,${alpha * 0.35})`;
@@ -801,7 +761,6 @@ function drawPlayerLines() {
     gCtx.lineCap     = 'round';
     gCtx.stroke();
 
-    // Core line
     gCtx.beginPath();
     gCtx.moveTo(sx1, ln.wy1); gCtx.lineTo(sx2, ln.wy2);
     gCtx.strokeStyle = `rgba(247,201,72,${alpha})`;
@@ -813,7 +772,6 @@ function drawPlayerLines() {
   gCtx.restore();
 }
 
-/** Render wheel-dust particles */
 function drawParticles() {
   for (const p of particles) {
     const sx = toScreen(p.x);
@@ -826,7 +784,6 @@ function drawParticles() {
   gCtx.globalAlpha = 1;
 }
 
-/** Render the car */
 function drawCar() {
   if (!car.alive && gameState !== 'idle') return;
 
@@ -842,14 +799,11 @@ function drawCar() {
   const hw = C.CAR_W / 2;
   const hh = C.CAR_H / 2;
 
-  /* ── Body ── */
-  // Shadow
   gCtx.fillStyle = 'rgba(0,0,0,0.4)';
   gCtx.beginPath();
   gCtx.ellipse(0, hh + C.WHEEL_R + 4, hw * 0.9, 5, 0, 0, Math.PI * 2);
   gCtx.fill();
 
-  // Main body
   gCtx.fillStyle = '#f7c948';
   gCtx.shadowBlur  = 12;
   gCtx.shadowColor = 'rgba(247,201,72,0.4)';
@@ -858,25 +812,20 @@ function drawCar() {
   gCtx.fill();
   gCtx.shadowBlur = 0;
 
-  // Cockpit
   gCtx.fillStyle = '#1a2545';
   gCtx.beginPath();
   gCtx.roundRect(-hw + 5, -hh + 3, C.CAR_W * 0.45, C.CAR_H - 7, 3);
   gCtx.fill();
 
-  // Windshield reflection
   gCtx.fillStyle = 'rgba(255,255,255,0.12)';
   gCtx.fillRect(-hw + 6, -hh + 4, C.CAR_W * 0.4, 4);
 
-  // Roof highlight strip
   gCtx.fillStyle = 'rgba(255,255,255,0.18)';
   gCtx.fillRect(-hw + 2, -hh + 2, C.CAR_W - 4, 3);
 
-  // Orange stripe
   gCtx.fillStyle = '#ff6b2b';
   gCtx.fillRect(-hw + 2, 2, C.CAR_W - 4, 4);
 
-  /* ── Headlight ── */
   gCtx.fillStyle = '#fffde0';
   gCtx.shadowBlur  = 14;
   gCtx.shadowColor = '#fff9c4';
@@ -885,24 +834,20 @@ function drawCar() {
   gCtx.fill();
   gCtx.shadowBlur = 0;
 
-  /* ── Wheels ── */
   const wheelXs = [-hw + 10, hw - 10];
   const wheelY  = hh;
 
   for (const wx of wheelXs) {
     const r = C.WHEEL_R;
-    // Tyre
     gCtx.fillStyle = '#1a1a1a';
     gCtx.beginPath();
     gCtx.arc(wx, wheelY, r, 0, Math.PI * 2);
     gCtx.fill();
-    // Rim
     gCtx.strokeStyle = '#888';
     gCtx.lineWidth = 2;
     gCtx.beginPath();
     gCtx.arc(wx, wheelY, r - 2, 0, Math.PI * 2);
     gCtx.stroke();
-    // Spokes
     gCtx.save();
     gCtx.translate(wx, wheelY);
     gCtx.rotate(car.wheelAngle);
@@ -920,7 +865,6 @@ function drawCar() {
   gCtx.restore();
 }
 
-/** Speed lines effect (sense of motion) */
 function drawSpeedLines() {
   if (gameState !== 'playing') return;
   gCtx.save();
@@ -940,14 +884,12 @@ function drawSpeedLines() {
 }
 
 /* ================================================================
-   UI CANVAS — Drawing preview & score pop
+   UI CANVAS
    ================================================================ */
 function renderUI() {
   uCtx.clearRect(0, 0, W, H);
 
-  // Live drawing preview
   if (drawing && gameState === 'playing') {
-    // Dashed preview line
     uCtx.save();
     uCtx.setLineDash([8, 5]);
     uCtx.beginPath();
@@ -959,7 +901,6 @@ function renderUI() {
     uCtx.stroke();
     uCtx.setLineDash([]);
 
-    // Start dot
     uCtx.beginPath();
     uCtx.arc(drawPt.x, drawPt.y, 5, 0, Math.PI * 2);
     uCtx.fillStyle = 'rgba(247,201,72,0.8)';
@@ -974,33 +915,26 @@ function renderUI() {
 function gameLoop(ts) {
   const raw = ts - lastTS;
   lastTS    = ts;
-  // Clamp delta so a tab switch doesn't cause a huge jump
   const dt  = clamp(raw / 16.667, 0.1, 4.0);
 
-  // Physics
   if (gameState === 'playing' && car.alive) {
     physicsCar(dt);
     spawnDust();
     updateParticles(dt);
 
-    // Camera follows car (car stays at ~30% from left)
     camX = car.x - W * 0.3;
 
-    // Score = distance in metres (1m = 10px)
     score = Math.floor(car.x / 10);
     if (score > highScore) highScore = score;
     updateHUDValues();
 
-    // Generate more terrain ahead
     const lastSeg = terrain[terrain.length - 1];
     if (lastSeg.x + lastSeg.w < car.x + C.LOOK_AHEAD) {
       generateTerrain(lastSeg.x + lastSeg.w, C.LOOK_AHEAD);
     }
 
-    // Prune old terrain behind camera
     terrain = terrain.filter(s => s.x + s.w > camX - C.TERRAIN_PRUNE);
 
-    // Car fell into void?
     if (!car.alive) {
       triggerGameOver();
       return;
@@ -1009,7 +943,6 @@ function gameLoop(ts) {
     updateParticles(dt);
   }
 
-  // ── Render ──
   drawSky();
   drawMountains();
   drawGroundGrid();
@@ -1129,11 +1062,8 @@ function onPointerUp(e) {
 
   const end = getPos(e);
   const len = Math.hypot(end.x - drawPt.x, end.y - drawPt.y);
-  if (len < 8) return; // ignore taps
+  if (len < 8) return;
 
-  // Convert screen coords → world coords at the time of drawing
-  // Note: camX was captured at pointer-down; we use current camX
-  // (they're the same or very close since the frame hasn't advanced)
   const line = {
     wx1: toWorld(drawPt.x),  wy1: drawPt.y,
     wx2: toWorld(end.x),     wy2: end.y,
@@ -1141,7 +1071,6 @@ function onPointerUp(e) {
 
   drawnLines.push(line);
 
-  // Enforce max line limit — remove oldest
   if (drawnLines.length > C.MAX_LINES) drawnLines.shift();
 
   document.getElementById('line-count').textContent = drawnLines.length;
@@ -1153,7 +1082,7 @@ uCanvas.addEventListener('mousemove',  onPointerMove);
 uCanvas.addEventListener('mouseup',    onPointerUp);
 uCanvas.addEventListener('mouseleave', onPointerUp);
 
-// Touch events
+// Touch events — passive:false agar preventDefault() bisa mencegah scroll
 uCanvas.addEventListener('touchstart',  onPointerDown, { passive: false });
 uCanvas.addEventListener('touchmove',   onPointerMove, { passive: false });
 uCanvas.addEventListener('touchend',    onPointerUp,   { passive: false });
@@ -1166,6 +1095,19 @@ document.getElementById('startBtn').addEventListener('click', startGame);
 document.getElementById('restartBtn').addEventListener('click', startGame);
 
 /* ================================================================
+   ORIENTATION / RESIZE HANDLING
+   Notifies user if landscape on phone for better experience
+   ================================================================ */
+function checkOrientation() {
+  // Nothing to resize since canvas is fixed logical size,
+  // CSS scaling handles display. Just prevent body scroll.
+  document.body.style.overflow = 'hidden';
+}
+window.addEventListener('resize', checkOrientation);
+window.addEventListener('orientationchange', checkOrientation);
+checkOrientation();
+
+/* ================================================================
    BOOTSTRAP
    ================================================================ */
 initStars();
@@ -1174,7 +1116,6 @@ gameState = 'idle';
 highScore = +localStorage.getItem('dr_hs') || 0;
 updateHUDValues();
 
-// Run a passive render loop so the start screen has a moving background
 lastTS = performance.now();
 rafID  = requestAnimationFrame(gameLoop);
 </script>
