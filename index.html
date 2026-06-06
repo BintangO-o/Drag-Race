@@ -6,7 +6,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Draw &amp; Race - Ultra Sharp Fullscreen</title>
+<title>Draw &amp; Race - Ultra Sharp Responsive</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
 /* ============================================================
@@ -46,34 +46,14 @@ body {
 }
 
 /* ============================================================
-   GAME WRAPPER & CANVAS (PROPORSI DIJAGA, RESOLUSI DI-BOOST)
+   GAME WRAPPER & CANVAS (Ukuran diatur dinamis oleh JavaScript)
    ============================================================ */
 #game-wrapper {
   position: relative;
-  width: 100vw;
-  height: 100vh;
-  max-width: 100%;
-  max-height: 100%;
-  /* Menjaga aspek rasio konstan agar game TIDAK TERTARIK di layar apa pun */
-  aspect-ratio: 24 / 11; 
   background: #05060f;
   box-shadow: 0 0 60px rgba(0,0,0,0.8);
   overflow: hidden;
-}
-
-/* Jika layar terlalu tegak/tinggi (seperti HP Potret), sesuaikan dimensi jangkauan */
-@media (aspect-ratio: < 24/11) {
-  #game-wrapper {
-    width: 100vw;
-    height: auto;
-  }
-}
-/* Jika layar terlalu lebar (seperti Monitor PC UltraWide), batasi tingginya */
-@media (aspect-ratio: > 24/11) {
-  #game-wrapper {
-    height: 100vh;
-    width: auto;
-  }
+  border-radius: 4px; /* Sedikit lengkungan manis saat tidak fullscreen penuh */
 }
 
 canvas {
@@ -103,7 +83,7 @@ canvas {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  pointer-events: none; /* Klik tembus ke canvas permainan */
+  pointer-events: none;
 }
 
 .hud-panel {
@@ -115,7 +95,7 @@ canvas {
   border-radius: 10px;
   display: flex;
   gap: 16px;
-  pointer-events: auto; /* Tombol di dalam HUD tetap bisa diklik */
+  pointer-events: auto;
 }
 
 .stat-block {
@@ -133,13 +113,13 @@ canvas {
 }
 .stat-value {
   font-family: 'DM Mono', monospace;
-  font-size: clamp(14px, 2vw, 18px);
+  font-size: clamp(14px, 2.5vw, 18px);
   font-weight: bold;
 }
 
 #center-branding {
   font-family: 'Bebas Neue', sans-serif;
-  font-size: clamp(18px, 3.5vw, 26px);
+  font-size: clamp(16px, 3.5vw, 26px);
   color: var(--yellow);
   letter-spacing: 1.5px;
   text-shadow: 0 0 15px rgba(247,201,72,0.4);
@@ -305,24 +285,44 @@ const gCtx    = gCanvas.getContext('2d');
 const uCanvas = document.getElementById('uiCanvas');
 const uCtx    = uCanvas.getContext('2d');
 
-/* LOGICAL VIRTUAL GAME RESOLUTION (Fisika & Rendering tetap konsisten dihitung disini) */
+/* LOGICAL VIRTUAL GAME RESOLUTION (Rasio dasar game 24:11) */
 const W = 720;   
 const H = 330;  
+const TARGET_ASPECT = W / H;
 
 /* ================================================================
-   DYNAMIC HIGH-DPI CANVAS RESIZER (Mencegah Gambar Pecah & Buram)
+   DYNAMIC RESIZER WITH MATHEMATICAL LETTERBOXING
    ================================================================ */
 function resizeCanvases() {
+  // 1. Ambil ukuran jendela browser yang tersedia saat ini
+  const windowWidth = window.innerWidth;
+  const windowHeight = window.innerHeight;
+  
+  let newWidth, newHeight;
+
+  // 2. Kalkulasi ukuran pembungkus agar rasio 24:11 selalu terjaga tanpa meluber keluar layar
+  if (windowWidth / windowHeight > TARGET_ASPECT) {
+    // Jika layar terlalu lebar (PC/Tablet Landscape)
+    newHeight = windowHeight;
+    newWidth = windowHeight * TARGET_ASPECT;
+  } else {
+    // Jika layar terlalu tinggi (HP Potret / Standar)
+    newWidth = windowWidth;
+    newHeight = windowWidth / TARGET_ASPECT;
+  }
+
+  // 3. Terapkan dimensi terbaru ke elemen pembungkus (Wrapper DOM)
+  wrapper.style.width = `${newWidth}px`;
+  wrapper.style.height = `${newHeight}px`;
+
+  // 4. Boost resolusi internal canvas berdasarkan rasio pixel layar (Retina/HD Display support)
   const dpr = window.devicePixelRatio || 1;
-  const rect = wrapper.getBoundingClientRect();
+  gCanvas.width  = newWidth * dpr;
+  gCanvas.height = newHeight * dpr;
+  uCanvas.width  = newWidth * dpr;
+  uCanvas.height = newHeight * dpr;
 
-  // Set resolusi internal canvas super tajam mengikuti ukuran layar asli & rasio pixel perangkat
-  gCanvas.width  = rect.width * dpr;
-  gCanvas.height = rect.height * dpr;
-  uCanvas.width  = rect.width * dpr;
-  uCanvas.height = rect.height * dpr;
-
-  // Sinkronisasikan matrix transformasi context canvas agar mencocokkan logika koordinat 720x330
+  // 5. Kembalikan dan kalibrasi ulang matrix skala logika koordinat game (720x330)
   gCtx.setTransform(1, 0, 0, 1, 0, 0); 
   gCtx.scale(gCanvas.width / W, gCanvas.height / H);
 
@@ -330,7 +330,11 @@ function resizeCanvases() {
   uCtx.scale(uCanvas.width / W, uCanvas.height / H);
 }
 
+// Pasang event listener resize yang stabil
 window.addEventListener('resize', resizeCanvases);
+window.addEventListener('orientationchange', () => {
+  setTimeout(resizeCanvases, 200); // Beri jeda sedikit agar rotasi OS selesai terlebih dahulu
+});
 
 /* ================================================================
    GAME CONSTANTS
@@ -389,7 +393,7 @@ function getPos(e) {
   const rect = uCanvas.getBoundingClientRect();
   const src = (e.touches && e.touches.length > 0) ? e.touches[0] : (e.changedTouches && e.changedTouches.length > 0 ? e.changedTouches[0] : e);
   
-  // Mengonversi input sentuhan/mouse presisi ke rasio virtual skala game (720x330) tanpa distorsi
+  // Konversi posisi klik yang dinamis mengikuti koordinat wrapper 720x330 secara presisi
   return {
     x: ((src.clientX - rect.left) / rect.width) * W,
     y: ((src.clientY - rect.top) / rect.height) * H
@@ -827,7 +831,11 @@ fsBtn.addEventListener('click', () => {
   }
 });
 document.addEventListener('fullscreenchange', () => {
-  if (!document.fullscreenElement) fsBtn.textContent = "🗖";
+  if (!document.fullscreenElement) {
+    fsBtn.textContent = "🗖";
+  }
+  // Paksa render kalkulasi ulang setiap kali status fullscreen berganti halaman
+  setTimeout(resizeCanvases, 150);
 });
 
 /* ================================================================
