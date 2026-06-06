@@ -48,7 +48,6 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Safe area for notched phones */
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
@@ -64,7 +63,6 @@ body {
   padding: clamp(6px, 2vw, 14px);
 }
 
-/* ── Top HUD bar ── */
 #hud {
   width: 100%;
   display: grid;
@@ -113,11 +111,8 @@ body {
   color: var(--white);
   line-height: 1;
 }
-#timer-display { color: var(--orange); }
-#timer-display.urgent { color: var(--red); animation: urgentPulse .4s infinite alternate; }
-@keyframes urgentPulse { from { opacity: 1; } to { opacity: .3; } }
+#timer-display { color: var(--cyan); }
 
-/* ── Canvas area ── */
 #canvas-shell {
   position: relative;
   width: 100%;
@@ -126,7 +121,6 @@ body {
   border: 1px solid var(--border2);
   box-shadow: 0 0 60px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.03);
   line-height: 0;
-  /* Touch-action: none prevents scroll when drawing on canvas */
   touch-action: none;
 }
 
@@ -142,7 +136,6 @@ body {
   touch-action: none;
 }
 
-/* ── Footer hint ── */
 #hint-bar {
   font-family: 'DM Mono', monospace;
   font-size: clamp(9px, 1.8vw, 11px);
@@ -154,7 +147,6 @@ body {
 }
 #hint-bar b { color: var(--yellow); font-weight: 500; }
 
-/* Mobile: show touch hint, hide mouse hint */
 #hint-touch { display: none; }
 @media (hover: none) and (pointer: coarse) {
   #hint-mouse { display: none; }
@@ -228,7 +220,7 @@ body {
   color: var(--muted2);
   text-align: center;
   line-height: 1.8;
-  max-width: min(340px, 90%);
+  max-width: min(360px, 95%);
 }
 .overlay-instructions b { color: var(--yellow); font-weight: 700; }
 
@@ -244,7 +236,6 @@ body {
   cursor: pointer;
   transition: all .18s;
   margin-top: 4px;
-  /* Large tap target for mobile */
   min-height: 44px;
   min-width: 120px;
 }
@@ -256,7 +247,6 @@ body {
 }
 .btn-play:active { transform: scale(.97); }
 
-/* ── Draw counter pill ── */
 #draw-counter {
   position: absolute;
   top: clamp(6px, 1.5vw, 12px);
@@ -271,11 +261,9 @@ body {
   pointer-events: none;
   z-index: 10;
 }
-#draw-counter span { color: var(--yellow); }
+#draw-counter.ready span { color: var(--green); font-weight: bold; }
+#draw-counter.cooldown span { color: var(--red); }
 
-/* ============================================================
-   LANDSCAPE PHONE — tighten up vertically
-   ============================================================ */
 @media (max-height: 500px) and (orientation: landscape) {
   #app { gap: 4px; padding: 4px; }
   #hud { padding: 4px 12px; border-radius: 8px; }
@@ -290,9 +278,6 @@ body {
   #hint-bar { font-size: 9px; }
 }
 
-/* ============================================================
-   VERY SMALL SCREENS (< 360px wide)
-   ============================================================ */
 @media (max-width: 360px) {
   #hud { grid-template-columns: 1fr; justify-items: center; gap: 4px; }
   .hud-stats { display: none; }
@@ -304,7 +289,6 @@ body {
 
 <div id="app">
 
-  <!-- HUD -->
   <div id="hud">
     <div class="hud-stats">
       <div class="stat-block">
@@ -321,35 +305,30 @@ body {
         <span class="stat-value" id="best-display">0</span>
       </div>
       <div class="stat-block">
-        <span class="stat-label">Waktu</span>
-        <span class="stat-value" id="timer-display">60</span>
+        <span class="stat-label">Mult. Kecepatan</span>
+        <span class="stat-value" id="timer-display">1.0x</span>
       </div>
     </div>
   </div>
 
-  <!-- Game canvas area -->
   <div id="canvas-shell">
     <canvas id="gameCanvas" width="720" height="330"></canvas>
     <canvas id="uiCanvas"   width="720" height="330"></canvas>
 
-    <!-- Draw counter -->
-    <div id="draw-counter">Garis: <span id="line-count">0</span> / 20</div>
+    <div id="draw-counter" class="ready">Tinta: <span id="line-count">READY</span></div>
 
-    <!-- Start screen overlay -->
     <div class="dom-overlay visible" id="startScreen">
       <div class="overlay-eyebrow">game arcade</div>
       <div class="overlay-title">Draw &amp; Race</div>
       <p class="overlay-instructions">
-        Mobil bergerak otomatis. <b>Gambar jembatan</b> di atas jurang<br>
-        agar mobil tidak jatuh. <span id="hint-mouse">Klik &amp; seret</span><span id="hint-touch">Sentuh &amp; geser</span> untuk menggambar garis.<br>
-        Bertahan sejauh mungkin dalam <b>60 detik</b>!
+        <b>Gambar jembatan kuning</b> untuk melewati jurang, melompati <b>Dinding Rintangan Laser Merah</b>, atau menghindari <b>Zona Duri Energi</b>!<br>
+        <span id="hint-mouse">Klik &amp; seret</span><span id="hint-touch">Sentuh &amp; geser</span> untuk menggambar garis.
       </p>
       <button class="btn-play" id="startBtn">MULAI ▶</button>
     </div>
 
-    <!-- Game over overlay -->
     <div class="dom-overlay" id="gameOverScreen">
-      <div class="overlay-eyebrow">waktu habis</div>
+      <div class="overlay-eyebrow">mobil hancur / jatuh</div>
       <div class="overlay-title">Game Over</div>
       <div class="overlay-score-big" id="final-score-big">0 <span style="font-size:28px;color:var(--muted2)">m</span></div>
       <div class="overlay-hs" id="final-hs-line">Rekor terbaik: 0 m</div>
@@ -359,45 +338,39 @@ body {
   </div>
 
   <div id="hint-bar">
-    <b>SENTUH / KLIK + SERET</b> di atas jurang untuk menggambar jembatan &nbsp;·&nbsp;
-    Garis lama otomatis terhapus jika penuh
+    HATI-HATI! Menabrak <b>Dinding Laser Merah</b> atau menyentuh <b>Zona Duri</b> akan menghancurkan mobil secara instan!
   </div>
 </div>
 
-<!-- ================================================================
-     JAVASCRIPT — Game Engine
-     ================================================================ -->
 <script>
 "use strict";
 
-/* ================================================================
-   CANVAS & CONTEXT SETUP
-   ================================================================ */
 const gCanvas = document.getElementById('gameCanvas');
 const gCtx    = gCanvas.getContext('2d');
 const uCanvas = document.getElementById('uiCanvas');
 const uCtx    = uCanvas.getContext('2d');
 
-const W = gCanvas.width;   // 720
-const H = gCanvas.height;  // 330
+const W = gCanvas.width;   
+const H = gCanvas.height;  
 
 /* ================================================================
    GAME CONSTANTS
    ================================================================ */
 const C = {
-  GRAVITY:       0.5,
-  CAR_SPEED:     2.8,
-  CAR_W:         40,
-  CAR_H:         18,
-  WHEEL_R:       8,
-  GROUND_BASE:   268,
-  FALL_DEATH:    H + 60,
-  MAX_LINES:     20,
-  LINE_THICK:    6,
+  GRAVITY:        0.5,
+  BASE_CAR_SPEED: 2.8,       
+  SPEED_ACCEL:    0.00030,   
+  MAX_SPEED_MULT: 4.5,       
+  CAR_W:          40,
+  CAR_H:          18,
+  WHEEL_R:        8,
+  GROUND_BASE:    268,
+  FALL_DEATH:     H + 60,
+  LINE_THICK:     6,
   LINE_TOLERANCE: 8,
-  GAME_SECONDS:  60,
-  LOOK_AHEAD:    900,
-  TERRAIN_PRUNE: 200,
+  LOOK_AHEAD:     900,
+  TERRAIN_PRUNE:  200,
+  COOLDOWN_TIME:  1.3,       
 };
 
 /* ================================================================
@@ -406,18 +379,21 @@ const C = {
 let gameState   = 'idle';
 let score       = 0;
 let highScore   = +localStorage.getItem('dr_hs') || 0;
-let timeLeft    = C.GAME_SECONDS;
-let timerID     = null;
+let speedMult   = 1.0;      
 let rafID       = null;
 let lastTS      = 0;
+
+let cooldownTimer = 0;      
 
 let camX = 0;
 let terrain = [];
 let drawnLines = [];
 let car = {};
 let drawing    = false;
-let drawPt     = { x: 0, y: 0 };
-let drawCurr   = { x: 0, y: 0 };
+
+let drawStartWorld = { x: 0, y: 0 }; 
+let drawEndWorld   = { x: 0, y: 0 }; 
+
 let particles  = [];
 let bgStars    = [];
 
@@ -431,15 +407,10 @@ const lerp  = (a, b, t)    => a + (b - a) * t;
 const toWorld  = (sx) => sx + camX;
 const toScreen = (wx) => wx - camX;
 
-/**
- * Get canvas coordinates from mouse/touch event.
- * Correctly scales from CSS pixels to canvas pixels on any device.
- */
 function getPos(e) {
   const rect = uCanvas.getBoundingClientRect();
   const scaleX = W / rect.width;
   const scaleY = H / rect.height;
-  // Support touch, changedTouches (touchend), and mouse
   const src = (e.touches && e.touches.length > 0)
     ? e.touches[0]
     : (e.changedTouches && e.changedTouches.length > 0)
@@ -466,11 +437,11 @@ function initStars() {
 }
 
 /* ================================================================
-   TERRAIN GENERATION
+   TERRAIN GENERATION (Ketinggian Dinding Laser Dikurangi)
    ================================================================ */
 function generateTerrain(fromX, length) {
   if (terrain.length === 0) {
-    terrain.push({ type: 'flat', x: -100, y: C.GROUND_BASE, w: 360 });
+    terrain.push({ type: 'flat', x: -100, y: C.GROUND_BASE, w: 550 });
   }
 
   let x  = fromX;
@@ -481,22 +452,50 @@ function generateTerrain(fromX, length) {
     const prevEndY = segEndY(lastSeg);
     const roll     = Math.random();
 
-    if (x < 100) {
-      addFlat(x, prevEndY, rand(120, 200));
-    } else if (roll < 0.28) {
-      const gw = rand(70, 130);
+    if (x < 250) {
+      addFlat(x, prevEndY, rand(150, 250));
+    } 
+    // 1. RINTANGAN JURANG (GAP)
+    else if (roll < 0.22) {
+      const gw = rand(60, 95);
       terrain.push({ type: 'gap', x, w: gw });
       x += gw;
-      continue;
-    } else if (roll < 0.52) {
-      const rw   = rand(80, 170);
+      addFlat(x, C.GROUND_BASE, rand(180, 300));
+    } 
+    // 2. RINTANGAN DINDING LASER -> Diubah tingginya agar lebih rendah (h: 28)
+    else if (roll < 0.40) {
+      const fw = rand(130, 180);
+      const boxH = 28; // Tinggi diturunkan dari 45 menjadi 28 piksel
+      terrain.push({ type: 'flat', x: x, y: prevEndY, w: fw });
+      terrain.push({ 
+        type: 'box_obstacle', 
+        x: x + fw / 2 - 15, 
+        y: prevEndY - boxH, // Mengatur titik y atas agar pas dengan tinggi baru
+        w: 30, 
+        h: boxH 
+      });
+      x += fw;
+      addFlat(x, prevEndY, rand(180, 300));
+    } 
+    // 3. RINTANGAN TANAH BERDURI/SPIKES
+    else if (roll < 0.58) {
+      const sw = rand(60, 90);
+      terrain.push({ type: 'spikes', x, y: prevEndY, w: sw });
+      x += sw;
+      addFlat(x, prevEndY, rand(180, 300));
+    } 
+    // 4. RINTANGAN TANJAKAN (RAMP)
+    else if (roll < 0.75) {
+      const rw   = rand(70, 120);
       const dY   = rand(-50, 50);
       const endY = clamp(prevEndY + dY, C.GROUND_BASE - 70, C.GROUND_BASE + 8);
       terrain.push({ type: 'ramp', x, y: prevEndY, w: rw, endY });
       x += rw;
-      continue;
-    } else {
-      addFlat(x, prevEndY, rand(80, 220));
+      addFlat(x, endY, rand(180, 300));
+    } 
+    // 5. TANAH DATAR TAMBAHAN (ZONA AMAN)
+    else {
+      addFlat(x, prevEndY, rand(200, 320));
     }
   }
 
@@ -509,15 +508,15 @@ function generateTerrain(fromX, length) {
 function segEndY(seg) {
   if (!seg) return C.GROUND_BASE;
   if (seg.type === 'ramp') return seg.endY;
-  if (seg.type === 'gap')  return C.GROUND_BASE;
+  if (seg.type === 'gap' || seg.type === 'box_obstacle') return C.GROUND_BASE;
   return seg.y;
 }
 
 function segSurfaceAt(seg, wx) {
-  if (seg.type === 'gap') return null;
+  if (seg.type === 'gap' || seg.type === 'box_obstacle') return null;
   const localX = wx - seg.x;
   if (localX < 0 || localX > seg.w) return null;
-  if (seg.type === 'flat') return seg.y;
+  if (seg.type === 'flat' || seg.type === 'spikes') return seg.y;
   if (seg.type === 'ramp') {
     const t = localX / seg.w;
     return lerp(seg.y, seg.endY, t);
@@ -526,11 +525,10 @@ function segSurfaceAt(seg, wx) {
 }
 
 /* ================================================================
-   PHYSICS CORE
+   PHYSICS & COLLISION CORE
    ================================================================ */
-function drawnLineSurfaceAt(wx) {
+function drawnLineSurfaceAt(wx, currentCarBottom) {
   let best = null;
-
   for (const ln of drawnLines) {
     const mnX = Math.min(ln.wx1, ln.wx2);
     const mxX = Math.max(ln.wx1, ln.wx2);
@@ -542,14 +540,48 @@ function drawnLineSurfaceAt(wx) {
     const t  = (wx - ln.wx1) / span;
     const sy = ln.wy1 + t * (ln.wy2 - ln.wy1);
 
+    if (currentCarBottom > sy + 12) continue;
     if (best === null || sy < best) best = sy;
   }
   return best;
 }
 
+function checkObstacleCollisions() {
+  const carLeft   = car.x;
+  const carRight  = car.x + C.CAR_W;
+  const carTop    = car.y;
+  const carBottom = car.y + C.CAR_H + C.WHEEL_R;
+
+  for (const seg of terrain) {
+    if (seg.type === 'box_obstacle') {
+      if (carRight > seg.x && carLeft < seg.x + seg.w &&
+          carBottom > seg.y && carTop < seg.y + seg.h) {
+        car.alive = false;
+      }
+    }
+    if (seg.type === 'spikes') {
+      const WHEEL_INSET = 10;
+      const wheel1X = car.x + WHEEL_INSET;
+      const wheel2X = car.x + C.CAR_W - WHEEL_INSET;
+      
+      if (car.onGround) {
+        if ((wheel1X >= seg.x && wheel1X <= seg.x + seg.w) || 
+            (wheel2X >= seg.x && wheel2X <= seg.x + seg.w)) {
+          const dy = drawnLineSurfaceAt(wheel1X, car.y + C.CAR_H + C.WHEEL_R);
+          if (dy === null || dy >= seg.y) {
+             car.alive = false;
+          }
+        }
+      }
+    }
+  }
+}
+
 function physicsCar(dt) {
+  const carBottomBefore = car.y + C.CAR_H + C.WHEEL_R;
+
   car.vy += C.GRAVITY * dt;
-  car.x  += C.CAR_SPEED * dt;
+  car.x  += (C.BASE_CAR_SPEED * speedMult) * dt;
   car.y  += car.vy * dt;
 
   const WHEEL_INSET = 10;
@@ -564,9 +596,11 @@ function physicsCar(dt) {
   for (const wx of probes) {
     for (const seg of terrain) {
       const sy = segSurfaceAt(seg, wx);
-      if (sy !== null && sy < highestSurface) highestSurface = sy;
+      if (sy !== null && carBottomBefore <= sy + 12 && sy < highestSurface) {
+         highestSurface = sy;
+      }
     }
-    const dy = drawnLineSurfaceAt(wx);
+    const dy = drawnLineSurfaceAt(wx, carBottomBefore);
     if (dy !== null && dy < highestSurface) highestSurface = dy;
   }
 
@@ -588,8 +622,9 @@ function physicsCar(dt) {
     car.onGround = false;
   }
 
-  car.wheelAngle += (C.CAR_SPEED / C.WHEEL_R) * dt;
+  checkObstacleCollisions();
 
+  car.wheelAngle += ((C.BASE_CAR_SPEED * speedMult) / C.WHEEL_R) * dt;
   const targetLean = clamp(car.vy / 25, -0.4, 0.4);
   car.lean = lerp(car.lean, targetLean, 0.12);
 
@@ -629,9 +664,9 @@ function updateParticles(dt) {
    ================================================================ */
 function drawSky() {
   const g = gCtx.createLinearGradient(0, 0, 0, H);
-  g.addColorStop(0,   '#060810');
-  g.addColorStop(0.6, '#0d1225');
-  g.addColorStop(1,   '#131830');
+  g.addColorStop(0,   '#05060f');
+  g.addColorStop(0.6, '#0c0b1a');
+  g.addColorStop(1,   '#18122b');
   gCtx.fillStyle = g;
   gCtx.fillRect(0, 0, W, H);
 
@@ -650,8 +685,7 @@ function drawSky() {
 function drawMountains() {
   const px  = camX * 0.15;
   gCtx.save();
-
-  gCtx.fillStyle = '#0e1322';
+  gCtx.fillStyle = '#0f0c24';
   gCtx.beginPath();
   const peaks = [
     [-60,220],[20,160],[90,210],[200,140],[310,190],[420,155],[500,200],[620,145],[700,195],[820,165],[900,210]
@@ -662,13 +696,12 @@ function drawMountains() {
   }
   gCtx.lineTo(W + 200, H); gCtx.lineTo(-200, H); gCtx.closePath();
   gCtx.fill();
-
   gCtx.restore();
 }
 
 function drawGroundGrid() {
   const gridY0 = C.GROUND_BASE;
-  gCtx.strokeStyle = 'rgba(61,255,160,0.06)';
+  gCtx.strokeStyle = 'rgba(107,70,255,0.09)';
   gCtx.lineWidth   = 1;
   const step = 36;
   const offX = camX % step;
@@ -688,33 +721,70 @@ function drawTerrain() {
     const sw = seg.w;
 
     if (seg.type === 'gap') {
-      const gx = sx, gw = sw;
-      gCtx.fillStyle = 'rgba(255,61,90,0.07)';
-      gCtx.fillRect(gx, C.GROUND_BASE, gw, H - C.GROUND_BASE);
-
-      gCtx.strokeStyle = 'rgba(255,61,90,0.6)';
-      gCtx.lineWidth   = 1.5;
-      gCtx.setLineDash([5, 5]);
+      gCtx.fillStyle = 'rgba(255,61,90,0.05)';
+      gCtx.fillRect(sx, C.GROUND_BASE, sw, H - C.GROUND_BASE);
+      gCtx.strokeStyle = 'rgba(255,61,90,0.4)';
+      gCtx.lineWidth   = 1;
+      gCtx.setLineDash([4, 4]);
       gCtx.beginPath();
-      gCtx.moveTo(gx,      C.GROUND_BASE); gCtx.lineTo(gx,      H);
-      gCtx.moveTo(gx + gw, C.GROUND_BASE); gCtx.lineTo(gx + gw, H);
+      gCtx.moveTo(sx, C.GROUND_BASE); gCtx.lineTo(sx, H);
+      gCtx.moveTo(sx + sw, C.GROUND_BASE); gCtx.lineTo(sx + sw, H);
       gCtx.stroke();
       gCtx.setLineDash([]);
-
-      gCtx.fillStyle = 'rgba(255,61,90,0.4)';
-      gCtx.font      = 'bold 11px "DM Mono", monospace';
-      gCtx.textAlign = 'center';
-      gCtx.fillText('▼ JURANG ▼', gx + gw / 2, C.GROUND_BASE + 22);
       continue;
     }
 
-    const y1 = seg.type === 'flat' ? seg.y : seg.y;
-    const y2 = seg.type === 'flat' ? seg.y : seg.endY;
+    if (seg.type === 'box_obstacle') {
+      gCtx.save();
+      gCtx.shadowBlur = 14;
+      gCtx.shadowColor = 'rgba(255, 61, 90, 0.8)';
+      gCtx.fillStyle = '#ff3d5a';
+      gCtx.strokeStyle = '#ffffff';
+      gCtx.lineWidth = 1.5;
+      gCtx.beginPath();
+      gCtx.roundRect(sx, seg.y, sw, seg.h, 4);
+      gCtx.fill();
+      gCtx.stroke();
+      
+      gCtx.fillStyle = 'rgba(255,255,255,0.2)';
+      for (let i = 4; i < seg.h; i += 8) {
+         gCtx.fillRect(sx + 3, seg.y + i, sw - 6, 2);
+      }
+      gCtx.restore();
+      continue;
+    }
+
+    if (seg.type === 'spikes') {
+      gCtx.fillStyle = '#1c0f24';
+      gCtx.fillRect(sx, seg.y, sw, H - seg.y);
+
+      gCtx.fillStyle = '#ff3d5a';
+      gCtx.beginPath();
+      const spikeWidth = 10;
+      const spikeHeight = 14;
+      for (let tx = 0; tx < sw; tx += spikeWidth) {
+        gCtx.moveTo(sx + tx, seg.y);
+        gCtx.lineTo(sx + tx + spikeWidth / 2, seg.y - spikeHeight);
+        gCtx.lineTo(sx + tx + spikeWidth, seg.y);
+      }
+      gCtx.fill();
+
+      gCtx.strokeStyle = '#ff768a';
+      gCtx.lineWidth = 2;
+      gCtx.beginPath();
+      gCtx.moveTo(sx, seg.y);
+      gCtx.lineTo(sx + sw, seg.y);
+      gCtx.stroke();
+      continue;
+    }
+
+    const y1 = seg.y;
+    const y2 = seg.type === 'ramp' ? seg.endY : seg.y;
 
     const grad = gCtx.createLinearGradient(0, Math.min(y1,y2), 0, H);
-    grad.addColorStop(0,   '#1d2540');
-    grad.addColorStop(0.08,'#161c35');
-    grad.addColorStop(1,   '#0a0c1a');
+    grad.addColorStop(0,   '#211942');
+    grad.addColorStop(0.15,'#140f2b');
+    grad.addColorStop(1,   '#080614');
     gCtx.fillStyle = grad;
     gCtx.beginPath();
     gCtx.moveTo(sx,      y1);
@@ -726,18 +796,12 @@ function drawTerrain() {
 
     gCtx.beginPath();
     gCtx.moveTo(sx, y1); gCtx.lineTo(sx + sw, y2);
-    gCtx.strokeStyle = '#3dffa0';
+    gCtx.strokeStyle = '#00f3ff';
     gCtx.lineWidth   = 3;
-    gCtx.shadowBlur  = 8;
-    gCtx.shadowColor = 'rgba(61,255,160,0.5)';
+    gCtx.shadowBlur  = 10;
+    gCtx.shadowColor = 'rgba(0,243,255,0.6)';
     gCtx.stroke();
     gCtx.shadowBlur  = 0;
-
-    gCtx.beginPath();
-    gCtx.moveTo(sx, y1 + 4); gCtx.lineTo(sx + sw, y2 + 4);
-    gCtx.strokeStyle = 'rgba(61,255,160,0.18)';
-    gCtx.lineWidth   = 2;
-    gCtx.stroke();
   }
 
   gCtx.restore();
@@ -750,9 +814,10 @@ function drawPlayerLines() {
   for (let i = 0; i < drawnLines.length; i++) {
     const ln    = drawnLines[i];
     const age   = drawnLines.length - 1 - i;
-    const alpha = Math.max(0.25, 1 - age * 0.04);
+    const alpha = Math.max(0.15, 1 - age * 0.02);
 
-    const sx1 = toScreen(ln.wx1), sx2 = toScreen(ln.wx2);
+    const sx1 = toScreen(ln.wx1);
+    const sx2 = toScreen(ln.wx2);
 
     gCtx.beginPath();
     gCtx.moveTo(sx1, ln.wy1); gCtx.lineTo(sx2, ln.wy2);
@@ -776,7 +841,7 @@ function drawParticles() {
   for (const p of particles) {
     const sx = toScreen(p.x);
     gCtx.globalAlpha = p.life * 0.55;
-    gCtx.fillStyle   = '#c8a840';
+    gCtx.fillStyle   = '#f7c948';
     gCtx.beginPath();
     gCtx.arc(sx, p.y, p.r, 0, Math.PI * 2);
     gCtx.fill();
@@ -820,9 +885,6 @@ function drawCar() {
   gCtx.fillStyle = 'rgba(255,255,255,0.12)';
   gCtx.fillRect(-hw + 6, -hh + 4, C.CAR_W * 0.4, 4);
 
-  gCtx.fillStyle = 'rgba(255,255,255,0.18)';
-  gCtx.fillRect(-hw + 2, -hh + 2, C.CAR_W - 4, 3);
-
   gCtx.fillStyle = '#ff6b2b';
   gCtx.fillRect(-hw + 2, 2, C.CAR_W - 4, 4);
 
@@ -839,11 +901,11 @@ function drawCar() {
 
   for (const wx of wheelXs) {
     const r = C.WHEEL_R;
-    gCtx.fillStyle = '#1a1a1a';
+    gCtx.fillStyle = '#111111';
     gCtx.beginPath();
     gCtx.arc(wx, wheelY, r, 0, Math.PI * 2);
     gCtx.fill();
-    gCtx.strokeStyle = '#888';
+    gCtx.strokeStyle = '#666';
     gCtx.lineWidth = 2;
     gCtx.beginPath();
     gCtx.arc(wx, wheelY, r - 2, 0, Math.PI * 2);
@@ -868,7 +930,7 @@ function drawCar() {
 function drawSpeedLines() {
   if (gameState !== 'playing') return;
   gCtx.save();
-  gCtx.globalAlpha = 0.06;
+  gCtx.globalAlpha = 0.06 * speedMult; 
   gCtx.strokeStyle = '#ffffff';
   gCtx.lineWidth   = 1;
   const lineY = car.y + C.CAR_H / 2;
@@ -889,21 +951,25 @@ function drawSpeedLines() {
 function renderUI() {
   uCtx.clearRect(0, 0, W, H);
 
-  if (drawing && gameState === 'playing') {
+  if (drawing && gameState === 'playing' && cooldownTimer <= 0) {
     uCtx.save();
     uCtx.setLineDash([8, 5]);
+    
+    const sx1 = toScreen(drawStartWorld.x);
+    const sx2 = toScreen(drawEndWorld.x);
+
     uCtx.beginPath();
-    uCtx.moveTo(drawPt.x, drawPt.y);
-    uCtx.lineTo(drawCurr.x, drawCurr.y);
-    uCtx.strokeStyle = 'rgba(247,201,72,0.55)';
+    uCtx.moveTo(sx1, drawStartWorld.y);
+    uCtx.lineTo(sx2, drawEndWorld.y);
+    uCtx.strokeStyle = 'rgba(247,201,72,0.65)';
     uCtx.lineWidth   = C.LINE_THICK;
     uCtx.lineCap     = 'round';
     uCtx.stroke();
     uCtx.setLineDash([]);
 
     uCtx.beginPath();
-    uCtx.arc(drawPt.x, drawPt.y, 5, 0, Math.PI * 2);
-    uCtx.fillStyle = 'rgba(247,201,72,0.8)';
+    uCtx.arc(sx1, drawStartWorld.y, 5, 0, Math.PI * 2);
+    uCtx.fillStyle = 'rgba(247,201,72,0.9)';
     uCtx.fill();
     uCtx.restore();
   }
@@ -918,6 +984,15 @@ function gameLoop(ts) {
   const dt  = clamp(raw / 16.667, 0.1, 4.0);
 
   if (gameState === 'playing' && car.alive) {
+    if (speedMult < C.MAX_SPEED_MULT) {
+        speedMult += C.SPEED_ACCEL * dt;
+    }
+
+    if (cooldownTimer > 0) {
+        cooldownTimer -= (raw / 1000); 
+        if (cooldownTimer < 0) cooldownTimer = 0;
+    }
+
     physicsCar(dt);
     spawnDust();
     updateParticles(dt);
@@ -933,7 +1008,8 @@ function gameLoop(ts) {
       generateTerrain(lastSeg.x + lastSeg.w, C.LOOK_AHEAD);
     }
 
-    terrain = terrain.filter(s => s.x + s.w > camX - C.TERRAIN_PRUNE);
+    terrain = terrain.filter(s => s.x + (s.w || 50) > camX - C.TERRAIN_PRUNE);
+    drawnLines = drawnLines.filter(ln => Math.max(ln.wx1, ln.wx2) > camX - C.TERRAIN_PRUNE);
 
     if (!car.alive) {
       triggerGameOver();
@@ -958,40 +1034,36 @@ function gameLoop(ts) {
 }
 
 /* ================================================================
-   HUD
+   HUD & UI UPDATE
    ================================================================ */
 function updateHUDValues() {
   document.getElementById('score-display').textContent = score;
   document.getElementById('best-display').textContent  = highScore;
-  document.getElementById('line-count').textContent    = drawnLines.length;
-  const td = document.getElementById('timer-display');
-  td.textContent = timeLeft;
-  td.className   = 'stat-value' + (timeLeft <= 10 ? ' urgent' : '');
-}
+  document.getElementById('timer-display').textContent = speedMult.toFixed(2) + 'x';
 
-/* ================================================================
-   TIMER
-   ================================================================ */
-function startTimer() {
-  clearInterval(timerID);
-  timerID = setInterval(() => {
-    timeLeft = Math.max(0, timeLeft - 1);
-    updateHUDValues();
-    if (timeLeft <= 0) triggerGameOver();
-  }, 1000);
+  const pill = document.getElementById('draw-counter');
+  const countSpan = document.getElementById('line-count');
+  if (cooldownTimer > 0) {
+      pill.className = "cooldown";
+      countSpan.textContent = `RELOAD (${cooldownTimer.toFixed(1)}s)`;
+  } else {
+      pill.className = "ready";
+      countSpan.textContent = "READY";
+  }
 }
 
 /* ================================================================
    GAME FLOW
    ================================================================ */
 function resetGame() {
-  score      = 0;
-  timeLeft   = C.GAME_SECONDS;
-  camX       = 0;
-  terrain    = [];
-  drawnLines = [];
-  particles  = [];
-  drawing    = false;
+  score         = 0;
+  speedMult     = 1.0;
+  cooldownTimer = 0;
+  camX          = 0;
+  terrain       = [];
+  drawnLines    = [];
+  particles     = [];
+  drawing       = false;
 
   generateTerrain(0, C.LOOK_AHEAD + 200);
 
@@ -1008,12 +1080,11 @@ function resetGame() {
   updateHUDValues();
 }
 
-function startGame() {
+ function startGame() {
   document.getElementById('startScreen').classList.remove('visible');
   document.getElementById('gameOverScreen').classList.remove('visible');
   resetGame();
   gameState = 'playing';
-  startTimer();
   lastTS    = performance.now();
   cancelAnimationFrame(rafID);
   rafID = requestAnimationFrame(gameLoop);
@@ -1021,7 +1092,6 @@ function startGame() {
 
 function triggerGameOver() {
   gameState = 'over';
-  clearInterval(timerID);
 
   const prev = +localStorage.getItem('dr_hs') || 0;
   const isNew = score > prev;
@@ -1041,18 +1111,20 @@ function triggerGameOver() {
    DRAWING INPUT
    ================================================================ */
 function onPointerDown(e) {
-  if (gameState !== 'playing') return;
+  if (gameState !== 'playing' || cooldownTimer > 0) return;
   e.preventDefault();
   const p  = getPos(e);
   drawing  = true;
-  drawPt   = { ...p };
-  drawCurr = { ...p };
+  
+  drawStartWorld = { x: toWorld(p.x), y: p.y };
+  drawEndWorld   = { x: toWorld(p.x), y: p.y };
 }
 
 function onPointerMove(e) {
   if (!drawing || gameState !== 'playing') return;
   e.preventDefault();
-  drawCurr = getPos(e);
+  const p = getPos(e);
+  drawEndWorld = { x: toWorld(p.x), y: p.y };
 }
 
 function onPointerUp(e) {
@@ -1061,28 +1133,25 @@ function onPointerUp(e) {
   drawing = false;
 
   const end = getPos(e);
-  const len = Math.hypot(end.x - drawPt.x, end.y - drawPt.y);
+  const startScreenX = toScreen(drawStartWorld.x);
+  const len = Math.hypot(end.x - startScreenX, end.y - drawStartWorld.y);
   if (len < 8) return;
 
   const line = {
-    wx1: toWorld(drawPt.x),  wy1: drawPt.y,
-    wx2: toWorld(end.x),     wy2: end.y,
+    wx1: drawStartWorld.x, wy1: drawStartWorld.y,
+    wx2: toWorld(end.x),    wy2: end.y
   };
 
   drawnLines.push(line);
-
-  if (drawnLines.length > C.MAX_LINES) drawnLines.shift();
-
-  document.getElementById('line-count').textContent = drawnLines.length;
+  cooldownTimer = C.COOLDOWN_TIME;
+  updateHUDValues();
 }
 
-// Mouse events
 uCanvas.addEventListener('mousedown',  onPointerDown);
 uCanvas.addEventListener('mousemove',  onPointerMove);
 uCanvas.addEventListener('mouseup',    onPointerUp);
 uCanvas.addEventListener('mouseleave', onPointerUp);
 
-// Touch events — passive:false agar preventDefault() bisa mencegah scroll
 uCanvas.addEventListener('touchstart',  onPointerDown, { passive: false });
 uCanvas.addEventListener('touchmove',   onPointerMove, { passive: false });
 uCanvas.addEventListener('touchend',    onPointerUp,   { passive: false });
@@ -1095,12 +1164,9 @@ document.getElementById('startBtn').addEventListener('click', startGame);
 document.getElementById('restartBtn').addEventListener('click', startGame);
 
 /* ================================================================
-   ORIENTATION / RESIZE HANDLING
-   Notifies user if landscape on phone for better experience
+   ORIENTATION HANDLERS
    ================================================================ */
 function checkOrientation() {
-  // Nothing to resize since canvas is fixed logical size,
-  // CSS scaling handles display. Just prevent body scroll.
   document.body.style.overflow = 'hidden';
 }
 window.addEventListener('resize', checkOrientation);
